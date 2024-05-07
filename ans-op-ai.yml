@@ -1,0 +1,62 @@
+---
+- name: Create and Configure Azure OpenAI Resource Integration with Private Endpoint
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Login to Azure
+      azure.azcollection.azure_rm_login:
+        username: "{{ azure_username }}"
+        password: "{{ azure_password }}"
+
+    - name: Create Azure OpenAI Resource
+      azure.azcollection.azure_rm_openairesource:
+        subscription_id: "{{ subscription_id }}"
+        resource_group: "{{ resource_group }}"
+        location: "{{ location }}"
+        service_name: "{{ openai_service_name }}"
+        sku: "{{ openai_sku }}"
+        state: present
+      register: openai_service
+
+    - name: Create Private Endpoint for OpenAI Integration
+      azure.azcollection.azure_rm_privateendpoint:
+        subscription_id: "{{ subscription_id }}"
+        resource_group: "{{ resource_group }}"
+        name: "{{ openai_service_name }}-private-endpoint"
+        location: "{{ location }}"
+        subnet_id: "{{ subnet_id }}"
+        private_service_connection_resource_group: "{{ resource_group }}"
+        private_service_connection_name: "{{ openai_service_name }}-private-endpoint-connection"
+        private_connection_sub_resource_name: "openaiservices"
+        group_ids: ["user"]
+        state: present
+      register: private_endpoint
+
+    - name: Configure Private Endpoint to Connect to OpenAI Resource
+      azure.azcollection.azure_rm_privateendpointassociation:
+        subscription_id: "{{ subscription_id }}"
+        resource_group: "{{ resource_group }}"
+        private_endpoint_name: "{{ openai_service_name }}-private-endpoint"
+        connection_resource_id: "{{ openai_service.id }}"
+        state: present
+
+    - name: Print OpenAI Service Information
+      debug:
+        var: openai_service
+
+    - name: Print Private Endpoint Information
+      debug:
+        var: private_endpoint
+
+
+# Explanation:
+
+# Login to Azure: We authenticate with Azure using the provided username and password using the azure_rm_login module.
+# Create Azure OpenAI Resource: We create an Azure OpenAI resource using the azure_rm_openairesource module. This task requires parameters such as subscription ID, resource group name, location, OpenAI service name, SKU, and state (present to create). The result is stored in the openai_service variable.
+# Create Private Endpoint for OpenAI Integration: We create a private endpoint for the OpenAI integration using the azure_rm_privateendpoint module. This task requires parameters such as subscription ID, resource group name, location, name of the private endpoint, subnet ID where the private endpoint should be deployed, and other necessary details. The result is stored in the private_endpoint variable.
+# Configure Private Endpoint to Connect to OpenAI Resource: We configure the private endpoint to connect to the OpenAI resource using the azure_rm_privateendpointassociation module. This task establishes the connection between the private endpoint and the OpenAI resource.
+# Print OpenAI Service Information: We print information about the OpenAI service using the debug module. This helps us verify that the OpenAI resource was created successfully.
+# Print Private Endpoint Information: We print information about the private endpoint using the debug module. This helps us verify that the private endpoint was created successfully.
+# Before running this playbook, ensure that you have installed the Azure Collection (ansible-galaxy collection install azure.azcollection) and replace placeholders like {{ azure_username }}, {{ azure_password }}, {{ subscription_id }}, {{ resource_group }}, {{ location }}, {{ openai_service_name }}, {{ openai_sku }}, and {{ subnet_id }} with your actual Azure and OpenAI service details.
