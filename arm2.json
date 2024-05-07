@@ -1,0 +1,108 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "openAiServiceName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the Azure OpenAI service."
+        }
+      },
+      "subnetName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the subnet."
+        }
+      }
+    },
+    "variables": {
+      "virtualNetworkName": "[concat('openAiVNet-', uniqueString(resourceGroup().id))]",
+      "privateEndpointName": "[concat('openAiPE-', uniqueString(resourceGroup().id))]",
+      "privateDnsZoneName": "[concat('privatelink.azurewebsites.net')]"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-11-01",
+        "name": "[variables('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.0.0/16"
+            ]
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Network/subnets",
+        "apiVersion": "2020-11-01",
+        "name": "[concat(variables('virtualNetworkName'), '/', parameters('subnetName'))]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        ],
+        "properties": {
+          "addressPrefix": "10.0.0.0/24"
+        }
+      },
+      {
+        "type": "Microsoft.Network/privateEndpoints",
+        "apiVersion": "2020-11-01",
+        "name": "[variables('privateEndpointName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+        ],
+        "properties": {
+          "subnet": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), parameters('subnetName'))]"
+          },
+          "privateLinkServiceConnections": [
+            {
+              "name": "[concat(variables('privateEndpointName'), '-conn')]",
+              "properties": {
+                "privateLinkServiceId": "[resourceId('Microsoft.OpenAI/openAIServices', parameters('openAiServiceName'))]",
+                "groupIds": [
+                  "user"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/privateDnsZones",
+        "apiVersion": "2020-03-01",
+        "name": "[variables('privateDnsZoneName')]",
+        "location": "Global",
+        "properties": {}
+      },
+      {
+        "type": "Microsoft.OpenAI/openAIServices",
+        "apiVersion": "2021-10-01",
+        "name": "[parameters('openAiServiceName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "davinci",
+          "tier": "Standard",
+          "capacity": 1
+        }
+      }
+    ],
+    "outputs": {
+      "privateEndpointName": {
+        "type": "string",
+        "value": "[variables('privateEndpointName')]"
+      }
+    }
+  }
+  

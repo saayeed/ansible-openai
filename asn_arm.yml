@@ -1,0 +1,17 @@
+--
+- name: Deploy Azure resources using ARM template
+  hosts: localhost
+  tasks:
+    - name: Deploy ARM template
+      azure_rm_deployment:
+        resource_group_name: your_resource_group
+        template: path/to/your/arm_template.json
+        parameters:
+          parameter1: value1
+          parameter2: value2
+        state: present
+      register: deployment
+
+    - name: Print deployment output
+      debug:
+        var: deployment

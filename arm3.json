@@ -1,0 +1,86 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "subscriptionId": {
+        "type": "string",
+        "metadata": {
+          "description": "Subscription ID where resources will be deployed."
+        }
+      },
+      "resourceGroupName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the resource group."
+        }
+      },
+      "region": {
+        "type": "string",
+        "metadata": {
+          "description": "Azure region where resources will be deployed."
+        }
+      },
+      "openAiServiceName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the Azure OpenAI service."
+        }
+      },
+      "pricingTier": {
+        "type": "string",
+        "allowedValues": ["Free", "Standard"],
+        "defaultValue": "Free",
+        "metadata": {
+          "description": "Pricing tier of the OpenAI service."
+        }
+      },
+      "subnetName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the subnet for private endpoint."
+        }
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.OpenAI/openAIServices",
+        "apiVersion": "2021-10-01",
+        "name": "[parameters('openAiServiceName')]",
+        "location": "[parameters('region')]",
+        "tags": {
+          "displayName": "[parameters('openAiServiceName')]"
+        },
+        "properties": {
+          "sku": {
+            "name": "[parameters('pricingTier')]",
+            "tier": "[parameters('pricingTier')]",
+            "capacity": 1
+          }
+        },
+        "resources": [
+          {
+            "type": "privateEndpointConnections",
+            "apiVersion": "2021-10-01",
+            "name": "privateEndpointConnection",
+            "dependsOn": [
+              "[resourceId('Microsoft.OpenAI/openAIServices', parameters('openAiServiceName'))]"
+            ],
+            "properties": {
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Approved by script"
+              },
+              "subResourceId": "[resourceId('Microsoft.OpenAI/openAIServices', parameters('openAiServiceName'))]"
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "privateEndpointConnectionId": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.OpenAI/openAIServices/privateEndpointConnections', parameters('openAiServiceName'), 'privateEndpointConnection')]"
+      }
+    }
+  }
+  

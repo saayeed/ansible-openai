@@ -1,0 +1,43 @@
+---
+- name: Deploy and Configure Azure OpenAI Service with Private Endpoint
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Login to Azure
+      azure.azcollection.azure_rm_login:
+        username: "{{ azure_username }}"
+        password: "{{ azure_password }}"
+
+    - name: Create Azure OpenAI Service
+      azure.azcollection.azure_rm_openairesource:
+        subscription_id: "{{ subscription_id }}"
+        resource_group: "{{ resource_group }}"
+        location: "{{ location }}"
+        service_name: "{{ openai_service_name }}"
+        sku: "{{ openai_sku }}"
+        state: present
+      register: openai_service
+
+    - name: Print OpenAI Service Information
+      debug:
+        var: openai_service
+
+    - name: Create Private Endpoint for OpenAI Service
+      azure.azcollection.azure_rm_privateendpoint:
+        subscription_id: "{{ subscription_id }}"
+        resource_group: "{{ resource_group }}"
+        name: "{{ openai_service_name }}-private-endpoint"
+        location: "{{ location }}"
+        subnet_id: "{{ subnet_id }}"
+        private_service_connection_resource_group: "{{ resource_group }}"
+        private_service_connection_name: "{{ openai_service_name }}-private-endpoint-connection"
+        private_connection_sub_resource_name: "openaiservices"
+        group_ids: ["user"]
+        state: present
+      register: private_endpoint
+
+    - name: Print Private Endpoint Information
+      debug:
+        var: private_endpoint

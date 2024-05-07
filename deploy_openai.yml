@@ -1,0 +1,36 @@
+## resource open ai
+sub:
+rg:
+
+region:
+name:
+
+pricing tier:
+
+
+---
+- name: Deploy Azure Cognitive Services
+  hosts: localhost
+  tasks:
+    - name: Authenticate with Azure
+      azure.azcollection.azure_rm_login:
+        client_id: ""
+        secret: ""
+        tenant: ""
+      delegate_to: localhost
+      register: login_result
+
+    - name: Provision Azure Cognitive Services
+      azure.azcollection.azure_rm_cognitiveservicesaccount:
+        resource_group: "my_resource_group"
+        name: "my_cognitive_service"
+        kind: "CognitiveServices"
+        location: "eastus"
+        sku:
+          name: "S0"
+      delegate_to: localhost
+      register: cognitive_service
+
+    - name: Display Provisioned Cognitive Service
+      debug:
+        var: cognitive_service
