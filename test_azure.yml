@@ -94,3 +94,35 @@
 
 #   - debug:
 #       var: openai_workspace
+
+
+- name: Add existing private endpoint to Azure OpenAI
+  hosts: localhost
+  tasks:
+    - name: Add private endpoint
+      azure.azcollection.azure_rm_privateendpoint:
+        resource_group: "{{ resource_group }}"
+        name: "{{ name }}"
+        private_link_service_id: "{{ private_link_service_id }}"
+        state: present
+      register: result
+
+    - name: Show result
+      debug:
+        var: result
+# resource_group: The name of your Azure resource group.
+# name: The name of your Azure OpenAI resource.
+# private_link_service_id: The ID of the existing private link service (i.e., the private endpoint).
+- name:
+  tasks:
+    - name: Execute Azure openai command
+      shell: az openai create --name MyOpenAIResource --resource-group MyResourceGroup --location eastus --sku S0
+      register: azure_openai_output
+
+    - name: Display output
+      debug:
+        var: azure_cli_output.stdout
+
+    - name: Execute Azure PE command
+      shell: az network private-endpoint create -n MyPE -g MyResourceGroup --vnet-name MyVnetName --subnet MySubnet --connection-name MyConnectionName --group-id MyGroupId --private-connection-resource-id MyResourceId --ip-configs [{name:Myipconfig1,group-id:MyGroupId,member-name:MyMemberName,private-ip-address:10.0.0.4},{name:Myipconfig2,private-ip-address:10.0.0.6}]
+      register: azure_PE_output
