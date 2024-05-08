@@ -1,0 +1,43 @@
+---
+
+- name: Deploy Azure OpenAI with private endpoint
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Create Azure OpenAI resource
+      azure_rm_openairesource:
+        name: my-openai-resource
+        location: eastus
+        sku: 'openai.megatron_model_345m.v1'
+        resource_group: my-resource-group
+        subscription_id: "{{ azure_subscription_id }}"
+        client_id: "{{ azure_client_id }}"
+        secret: "{{ azure_client_secret }}"
+        tenant: "{{ azure_tenant }}"
+        state: present
+
+    - name: Get OpenAI resource id
+      set_fact:
+        openai_resource_id: "{{ azure_rm_openairesource.resource.id }}"
+
+    - name: Create network private endpoint
+      azure_rm_privateendpoint:
+        name: my-openai-endpoint
+        resource_group: my-resource-group
+        location: eastus
+        subnet_name: my-subnet
+        subnet_prefix: 10.0.0.0/24
+        private_service_connection_name: my-openai-connection
+        private_service_connection_type: 'Microsoft.CognitiveServices/accounts'
+        connection_name: my-openai-connection
+        state: present
+
+    - name: Get private endpoint id
+      set_fact:
+        private_endpoint_id: "{{ azure_rm_privateendpoint.id }}"
+
+    - name: Update OpenAI resource with private endpoint
+      azure_rm_openairesource:
+        id: "{{ openai_resource_id }}"
+        private_endpoint: "{{ private_endpoint_id }}"
+        state: present
