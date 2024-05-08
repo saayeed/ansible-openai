@@ -1,0 +1,96 @@
+---
+- name: Deploy Azure OpenAI with Private Endpoint
+  hosts: localhost
+  connection: local
+  # vars:
+  #   subscription_id: "your_subscription_id"
+  #   resource_group: "your_resource_group"
+  #   location: "your_location"
+  #   service_name: "your_openai_service_name"
+  #   pricing_tier: "your_pricing_tier"  # Example: "S1"
+  #   virtual_network_name: "your_virtual_network_name"
+  #   subnet_name: "your_subnet_name"
+  #   private_endpoint_name: "private-endpoint-name"
+  #   private_connection_name: "private-connection-name"
+
+  # tasks:
+  #   - name: Create Private Endpoint
+  #     azure_rm_resource:
+  #       api_version: "2021-02-01"
+  #       method: "PUT"
+  #       resource_group: "{{ resource_group }}"
+  #       resource_provider: "Microsoft.Network"
+  #       resource_type: "privateEndpoints"
+  #       name: "{{ private_endpoint_name }}"
+  #       location: "{{ location }}"
+  #       properties:
+  #         subnet:
+  #           id: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}/subnets/{{ subnet_name }}"
+  #         privateLinkServiceConnections:
+  #           - name: "{{ private_connection_name }}"
+  #             properties:
+  #               privateLinkServiceId: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.MachineLearningServices/openAiServices/{{ service_name }}"
+  #       login_username: "your_azure_username"
+  #       login_password: "your_azure_password"
+  #     register: private_endpoint
+
+- name: Create private endpoint
+  azure_rm_privateendpoint:
+    name: openai_privateendpoint
+    resource_group: RG_openai
+    private_link_service_connections:
+      - name: Test_private_link_service
+        private_link_service_id: /subscriptions/xxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateLinkServices/testervice
+    subnet:
+      id: /subscriptions/xxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/fredvnet/subnets/default
+    tags:
+      key1: value1
+      key2: value2
+
+- name: Update private endpoint connection
+  azure_rm_privateendpointconnection_info:
+    name: pe-connection-name
+    service_name: testserviceName
+    resource_group: myRG
+    connection_state:
+      description: "new_description string"
+      actions_required: "Message string"
+      status: "Rejected"
+
+- name: Deploy ARM template
+      azure_rm_deployment:
+        name: deploy-openai-workspace
+        resource_group_name: "your_resource_group"
+        template: "path/to/openai-template.json"
+        parameters:
+          workspaceName: "your_workspace_name"
+          location: "your_location"
+          sku: "your_pricing_tier"
+        login_username: "your_azure_username"
+        login_password: "your_azure_password"
+
+# - name: Deploy Azure OpenAI Workspace
+#     azure_rm_resource:
+#       api_version: '2021-09-01'
+#       resource_group: "{{ resource_group }}"
+#       resource_type: Microsoft.MachineLearningServices/workspaces
+#       name: "your_workspace_name"
+#       properties:
+#         description: "Description of your OpenAI workspace"
+#         # containerRegistry: null
+#         # storageAccount: null
+#         privateEndpointConnections:
+#           - id: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/privateEndpoints/{{ private_endpoint_name }}"
+#         # managedResourceGroupId: null
+#         # encryption: null
+#         # imageBuildCompute: null
+#         sku: {
+#           "name": "{{ pricing_tier }}"
+#         }
+#       login_username: "your_azure_username"
+#       login_password: "your_azure_password"
+#       state: present
+#     register: openai_workspace
+
+#   - debug:
+#       var: openai_workspace

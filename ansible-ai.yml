@@ -4,11 +4,11 @@
   connection: local
   gather_facts: no
 
-  tasks:
-    - name: Login to Azure
-      azure.azcollection.azure_rm_login:
-        username: "{{ azure_username }}"
-        password: "{{ azure_password }}"
+  # tasks:
+  #   - name: Login to Azure
+  #     azure.azcollection.azure_rm_login:
+  #       username: "{{ azure_username }}"
+  #       password: "{{ azure_password }}"
 
     - name: Create Azure OpenAI Service
       azure.azcollection.azure_rm_openairesource:

@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "workspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the Azure OpenAI workspace"
+        }
+      },
+      "resourceGroupName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the resource group"
+        }
+      },
+      "location": {
+        "type": "string",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "sku": {
+        "type": "string",
+        "metadata": {
+          "description": "Pricing tier for the OpenAI workspace."
+        }
+      }
+    },
+    "variables": {
+      "workspaceResourceId": "[resourceId(parameters('resourceGroupName'), 'Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.MachineLearningServices/workspaces",
+        "apiVersion": "2021-09-01",
+        "name": "[parameters('workspaceName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "description": "Description of your OpenAI workspace",
+          "friendlyName": "Friendly name of your workspace",
+          "containerRegistry": null,
+          "storageAccount": null,
+          "encryption": null,
+          "imageBuildCompute": null,
+          "sku": {
+            "name": "[parameters('sku')]"
+          }
+        }
+      }
+    ],
+    "outputs": {}
+  }
+  
